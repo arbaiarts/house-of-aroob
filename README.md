@@ -18,7 +18,7 @@
 Featuring sheet registration numbers, corner crop marks, hairline dimension guides, and a tactile dark-onyx canvas accented by rich gold highlights, the site delivers a high-end editorial feel with zero framework overhead.
 
 ### 🌐 Live Demo
-🔗 **[https://yourusername.github.io/house-of-aroob/](https://yourusername.github.io/house-of-aroob/)**  
+🔗 **[https://arbaiarts.github.io/house-of-aroob/](https://arbaiarts.github.io/house-of-aroob/)**  
 *(Replace `yourusername` with your GitHub handle upon deployment)*
 
 ---
