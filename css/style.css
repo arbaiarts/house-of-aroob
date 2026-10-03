@@ -31,6 +31,7 @@
   --pad-y: clamp(4rem, 10vw, 8rem);
   --max-width: 1440px;
   --ease: cubic-bezier(0.25, 1, 0.5, 1);
+  --nav-h: 64px; /* nav bar height for scroll-padding */
 }
 
 /* --------------------------------------------------------------------------
@@ -44,6 +45,7 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: var(--nav-h);
   font-size: 16px;
 }
 
@@ -55,6 +57,8 @@ body {
   font-size: var(--body);
   line-height: 1.7;
   overflow-x: hidden;
+  overflow-wrap: break-word;
+  word-break: break-word;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   padding-left: env(safe-area-inset-left);
@@ -96,6 +100,13 @@ h2.section-title {
   margin-bottom: 2rem;
   text-align: center;
 }
+.section-title em {
+  font-style: italic;
+  background: var(--gold-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
 
 h3 {
   font-size: var(--h3);
@@ -132,6 +143,7 @@ h3 {
   border-width: 0;
 }
 
+@media(max-width:600px){ .section{padding:clamp(2.5rem,8vw,4rem) clamp(1rem,4vw,1.5rem);} }
 .section {
   padding: var(--pad-y) var(--pad-x);
   max-width: var(--max-width);
@@ -153,6 +165,11 @@ h3 {
   transform: translateY(0);
 }
 
+.no-js .reveal-line, .no-js .process-step {
+  opacity: 1;
+  transform: none;
+}
+
 /* --------------------------------------------------------------------------
    5. BUTTONS
    -------------------------------------------------------------------------- */
@@ -166,7 +183,8 @@ h3 {
   letter-spacing: 0.12em;
   font-family: 'Montserrat', sans-serif;
   font-weight: 500;
-  min-height: 44px;
+  min-height: 48px;
+  touch-action: manipulation;
   transition: all 0.3s var(--ease);
   cursor: pointer;
 }
@@ -218,6 +236,7 @@ h3 {
 /* --------------------------------------------------------------------------
    6. SHEET LABELS & CROP MARKS (THE DRAWING SET)
    -------------------------------------------------------------------------- */
+@media(max-width:700px){ .sheet-label{font-size:0.5rem; top:0.75rem; right:0.75rem; opacity:0.5;} }
 .sheet-label {
   position: absolute;
   top: var(--pad-x);
@@ -297,18 +316,8 @@ h3 {
 /* --------------------------------------------------------------------------
    8. FILM GRAIN
    -------------------------------------------------------------------------- */
-.grain {
-  position: fixed;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  pointer-events: none;
-  z-index: 9998;
-  opacity: 0.04;
-  background-image: repeating-conic-gradient(var(--onyx) 0%, transparent .0001%, transparent .0005%, transparent .00095%), repeating-conic-gradient(var(--onyx) 0%, transparent .0005%, transparent .00015%, transparent .0009%);
-  background-size: 2px 2px;
-}
+.grain { position:fixed; inset:0; pointer-events:none; z-index:9998; opacity:0.035; background:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.75" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23n)" opacity="0.5"/></svg>'); background-size:150px 150px; }
+@media(max-width:700px){.grain{display:none;}}
 
 /* --------------------------------------------------------------------------
    9. CURSOR
@@ -324,7 +333,7 @@ h3 {
     z-index: 9997;
     display: none;
     transform: translate(-50%, -50%);
-    transition: transform 0.15s ease, background-color 0.15s ease, width 0.15s ease, height 0.15s ease;
+    transition: width 0.15s ease, height 0.15s ease, background-color 0.15s ease;
   }
   .cursor.hovering {
     width: 30px;
@@ -411,7 +420,8 @@ h3 {
   align-items: center;
   gap: 5px;
   min-width: 44px;
-  min-height: 44px;
+  min-height: 48px;
+  touch-action: manipulation;
   cursor: pointer;
   z-index: 1001;
 }
@@ -420,7 +430,22 @@ h3 {
   width: 24px;
   height: 1px;
   background-color: var(--gold);
-  transition: all 0.3s ease;
+  transition: transform 0.35s ease, opacity 0.25s ease;
+  transform-origin: center;
+}
+
+/* Hamburger → X when the toggle carries .is-open */
+.nav-toggle.is-open .hamburger-line:nth-child(1) {
+  transform: translateY(6px) rotate(45deg);
+}
+
+.nav-toggle.is-open .hamburger-line:nth-child(2) {
+  opacity: 0;
+  transform: scaleX(0);
+}
+
+.nav-toggle.is-open .hamburger-line:nth-child(3) {
+  transform: translateY(-6px) rotate(-45deg);
 }
 
 .nav-mobile {
@@ -434,7 +459,8 @@ h3 {
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.3s ease, visibility 0.3s ease;
-  z-index: 999;
+  z-index: 1001;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
 .nav-mobile.is-open {
@@ -461,6 +487,9 @@ h3 {
   font-family: 'Cormorant Garamond', serif;
   font-size: 2.5rem;
   color: var(--cream);
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
 }
 
 @media (min-width: 768px) {
@@ -476,8 +505,8 @@ h3 {
    11. HERO
    -------------------------------------------------------------------------- */
 .hero {
+  height: 100vh;
   height: 100svh;
-  min-height: 100vh; /* fallback */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -515,6 +544,7 @@ h3 {
   z-index: 2;
   opacity: 0.15;
 }
+@media(max-width:700px){ .hero-floorplan{opacity:0.06;} }
 
 /* JS calculates per-element stroke-dasharray/offset for the drawing animation */
 
@@ -559,7 +589,11 @@ h3 {
   flex-wrap: wrap;
   margin-top: 2rem;
 }
+@media(max-width:400px){ .hero-buttons{flex-direction:column; align-items:center;} }
 
+@media(max-width:600px){
+  .scroll-cue { display: none; }
+}
 .scroll-cue {
   position: absolute;
   bottom: 2rem;
@@ -593,6 +627,9 @@ h3 {
   50% { transform: translateY(8px); opacity: 1; }
 }
 
+@media(max-width:600px){
+  .hero-annotation { display: none; }
+}
 .hero-annotation {
   position: absolute;
   bottom: 2rem;
@@ -667,13 +704,11 @@ h3 {
 }
 
 .dim-x {
+  position: relative;
   top: -20px;
-  left: 0;
   width: 100%;
   text-align: center;
   border-bottom: 1px solid var(--line);
-  line-height: 0.1em;
-  margin: 10px 0 20px;
 }
 
 .dim-x::before, .dim-x::after {
@@ -752,6 +787,7 @@ h3 {
   gap: 0;
 }
 
+@media(max-width:480px){ .philosophy-word{font-size:clamp(2rem,12vw,3.5rem);} }
 .philosophy-word {
   font-family: 'Cormorant Garamond', serif;
   font-size: clamp(3rem, 8vw, 8rem);
@@ -805,10 +841,7 @@ h3 {
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.service-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-}
+@media(hover:hover){ .service-card:hover{ box-shadow:0 4px 20px rgba(0,0,0,0.3); } }
 
 .service-number {
   position: absolute;
@@ -946,6 +979,7 @@ h3 {
   flex-shrink: 0;
   width: clamp(250px, 40vw, 350px);
 }
+@media(max-width:600px){ .gallery-item{width:clamp(220px,75vw,300px);} }
 
 .gallery-frame {
   position: relative;
@@ -995,12 +1029,13 @@ figcaption.annotation {
 
 .lightbox-close {
   position: absolute;
-  top: 1.5rem;
-  right: 1.5rem;
+  top: calc(1.5rem + env(safe-area-inset-top));
+  right: calc(1.5rem + env(safe-area-inset-right));
   font-size: 2rem;
   color: var(--cream);
   min-width: 44px;
-  min-height: 44px;
+  min-height: 48px;
+  touch-action: manipulation;
   z-index: 1;
   cursor: pointer;
 }
@@ -1012,7 +1047,8 @@ figcaption.annotation {
   font-size: 3rem;
   color: var(--cream);
   min-width: 44px;
-  min-height: 44px;
+  min-height: 48px;
+  touch-action: manipulation;
   z-index: 1;
   cursor: pointer;
 }
@@ -1151,6 +1187,7 @@ figcaption.annotation {
   padding-left: 1.5rem;
   max-width: 300px;
 }
+@media(max-width:600px){ .trust-note{max-width:none;} }
 
 .trust-note p {
   font-family: 'Cormorant Garamond', serif;
@@ -1227,6 +1264,7 @@ figcaption.annotation {
   border-bottom: 1px solid var(--line);
   color: var(--cream);
   transition: border-color 0.3s ease;
+  font-size: 16px;
 }
 
 .form-group input:focus,
@@ -1302,7 +1340,7 @@ figcaption.annotation {
   width: 100%;
   height: 250px;
   border: 1px solid var(--line);
-  filter: grayscale(1) invert(0.9) contrast(0.8);
+  filter: grayscale(1) invert(0.85) contrast(0.85) brightness(0.9);
   margin-top: 1rem;
 }
 
@@ -1391,7 +1429,7 @@ figcaption.annotation {
 }
 
 /* --------------------------------------------------------------------------
-   22. WHATSAPP FLOAT
+   22. WHATSAPP FLOAT + TOOLTIP
    -------------------------------------------------------------------------- */
 .whatsapp-float {
   position: fixed;
@@ -1407,9 +1445,12 @@ figcaption.annotation {
   z-index: 999;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  /* Tooltip needs relative parent */
+  overflow: visible;
 }
 
-.whatsapp-float:hover {
+.whatsapp-float:hover,
+.whatsapp-float:focus-visible {
   transform: translateY(-3px);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
 }
@@ -1418,7 +1459,61 @@ figcaption.annotation {
   width: 24px;
   height: 24px;
   fill: var(--onyx);
+  /* sit above the tooltip absolutely so it doesn't shift */
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
 }
+
+/* Tooltip pill that sits to the left of the button */
+.wa-tooltip {
+  position: absolute;
+  right: calc(100% + 12px);        /* 12px gap between pill and button */
+  top: 50%;
+  transform: translateY(-50%) translateX(8px);
+  white-space: nowrap;
+  background: var(--onyx);
+  color: var(--gold);
+  border: 1px solid var(--line);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  border-radius: 2px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+/* Show on hover / focus (desktop) */
+@media (hover: hover) {
+  .whatsapp-float:hover .wa-tooltip,
+  .whatsapp-float:focus-visible .wa-tooltip {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+}
+
+/* Show after scroll nudge (JS adds .wa-nudge to body) */
+.wa-nudge .whatsapp-float .wa-tooltip {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+/* Auto-hide nudge tooltip after 4s via animation */
+.wa-nudge .whatsapp-float .wa-tooltip {
+  animation: tooltipNudge 4s ease forwards;
+}
+
+@keyframes tooltipNudge {
+  0%   { opacity: 0; transform: translateY(-50%) translateX(8px); }
+  15%  { opacity: 1; transform: translateY(-50%) translateX(0); }
+  75%  { opacity: 1; transform: translateY(-50%) translateX(0); }
+  100% { opacity: 0; transform: translateY(-50%) translateX(4px); }
+}
+
 
 /* --------------------------------------------------------------------------
    23. ACCESSIBILITY & FOCUS
@@ -1433,6 +1528,7 @@ figcaption.annotation {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto !important; }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
@@ -1443,7 +1539,26 @@ figcaption.annotation {
     opacity: 1;
     transform: none;
   }
+  .process-step {
+    opacity: 1;
+    transform: none;
+  }
   .scroll-cue-line {
     animation: none;
   }
+  /* Hamburger lines: snap immediately, no rotation transition */
+  .hamburger-line {
+    transition: none;
+  }
+  /* Tooltip: show statically without slide animation */
+  .wa-tooltip {
+    transition: none;
+    animation: none !important;
+  }
 }
+
+/* Hide dimension annotations on mobile */
+@media(max-width:700px){ .dim-x, .dim-label{display:none;} }
+
+/* Fallback: hide loader when JS is disabled */
+.no-js .loader { display:none; }
