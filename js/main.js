@@ -1,9 +1,13 @@
 'use strict';
 
 (function() {
+  document.documentElement.classList.remove('no-js');
+  document.documentElement.classList.add('js');
+
   // --- Config & State ---
   const state = {
     isLoaded: false,
+    animationsInitialized: false,
     isMobileMenuOpen: false,
     isLightboxOpen: false,
     currentGalleryIndex: 0,
@@ -14,14 +18,6 @@
   };
 
   // --- Utility Functions ---
-  function debounce(fn, wait) {
-    let timeout;
-    return function(...args) {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => fn.apply(this, args), wait);
-    };
-  }
-
   function trapFocus(element) {
     const focusableElements = element.querySelectorAll('a[href], button, input, textarea, select, details, [tabindex]:not([tabindex="-1"])');
     if (focusableElements.length === 0) return;
@@ -53,7 +49,6 @@
     if (!loader) {
       document.body.classList.add('loaded');
       state.isLoaded = true;
-      initAnimations();
       return;
     }
 
@@ -66,7 +61,6 @@
         }
         document.body.classList.add('loaded');
         state.isLoaded = true;
-        initAnimations();
       }, 300);
     };
 
@@ -135,20 +129,24 @@
     
     if (!nav || !navToggle || !navMobile) return;
 
-    const handleScroll = debounce(() => {
-      if (window.scrollY > 50) {
-        nav.classList.add('nav-scrolled');
-      } else {
-        nav.classList.remove('nav-scrolled');
+    let scrollTicking = false;
+    window.addEventListener('scroll', () => {
+      if (!scrollTicking) {
+        scrollTicking = true;
+        requestAnimationFrame(() => {
+          nav.classList.toggle('nav-scrolled', window.scrollY > 50);
+          scrollTicking = false;
+        });
       }
-    }, 10);
-    window.addEventListener('scroll', handleScroll, { passive: true });
+    }, { passive: true });
 
     const toggleMenu = () => {
       state.isMobileMenuOpen = !state.isMobileMenuOpen;
       navMobile.classList.toggle('is-open', state.isMobileMenuOpen);
+      navToggle.classList.toggle('is-open', state.isMobileMenuOpen);
       navToggle.setAttribute('aria-expanded', state.isMobileMenuOpen);
-      document.body.style.overflow = state.isMobileMenuOpen ? 'hidden' : 'auto';
+      navToggle.setAttribute('aria-label', state.isMobileMenuOpen ? 'Close menu' : 'Open menu');
+      document.body.style.overflow = state.isMobileMenuOpen ? 'hidden' : '';
       if (state.isMobileMenuOpen) {
         navMobile.focus();
       }
@@ -253,6 +251,7 @@
       item.addEventListener('click', openLightboxHandler);
       item.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
+          if (e.key === ' ') e.preventDefault();
           openLightboxHandler(e);
         }
       });
@@ -273,6 +272,7 @@
       updateLightbox(index);
       lightbox.classList.add('is-open');
       lightbox.setAttribute('aria-hidden', 'false');
+      lightbox.setAttribute('aria-modal', 'true');
       document.body.style.overflow = 'hidden';
       closeBtn.focus();
     };
@@ -281,7 +281,8 @@
       state.isLightboxOpen = false;
       lightbox.classList.remove('is-open');
       lightbox.setAttribute('aria-hidden', 'true');
-      document.body.style.overflow = 'auto';
+      lightbox.removeAttribute('aria-modal');
+      document.body.style.overflow = '';
       if (triggerElement) triggerElement.focus();
     };
 
@@ -302,6 +303,21 @@
       if (e.key === 'Escape') closeLightbox();
       if (e.key === 'ArrowLeft') showPrev();
       if (e.key === 'ArrowRight') showNext();
+      
+      if (e.key === 'Tab') {
+        const focusable = lightbox.querySelectorAll('button, [tabindex]:not([tabindex="-1"])');
+        if (focusable.length) {
+          const first = focusable[0];
+          const last = focusable[focusable.length - 1];
+          if (e.shiftKey && document.activeElement === first) { 
+            last.focus(); 
+            e.preventDefault(); 
+          } else if (!e.shiftKey && document.activeElement === last) { 
+            first.focus(); 
+            e.preventDefault(); 
+          }
+        }
+      }
     });
 
     let touchStartX = 0;
@@ -315,8 +331,6 @@
       if (touchStartX - touchEndX > 50) showNext();
       if (touchEndX - touchStartX > 50) showPrev();
     }, { passive: true });
-
-    trapFocus(lightbox);
   }
 
   // --- Contact Form ---
@@ -372,8 +386,40 @@
     }
   }
 
+  // --- WhatsApp nudge tooltip ---
+  // Fires once after the user scrolls 400px, briefly shows the tooltip
+  function initWhatsAppNudge() {
+    // Skip if user prefers reduced motion or no WhatsApp button exists
+    if (state.reducedMotion) return;
+    const waBtn = document.querySelector('.whatsapp-float');
+    if (!waBtn) return;
+
+    let nudgeFired = false;
+
+    const onScroll = () => {
+      if (nudgeFired) return;
+      if (window.scrollY < 400) return;
+
+      nudgeFired = true;
+      window.removeEventListener('scroll', onScroll);
+
+      // Add nudge class — CSS animation runs for 4s
+      document.body.classList.add('wa-nudge');
+
+      // Remove class after animation completes so it can't interfere with hover
+      setTimeout(() => {
+        document.body.classList.remove('wa-nudge');
+      }, 5000);
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+  }
+
   // --- GSAP Animations ---
   function initAnimations() {
+    if (state.animationsInitialized) return;
+    state.animationsInitialized = true;
+
     const isGSAPAvailable = typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined';
     
     if (!isGSAPAvailable || state.reducedMotion) {
@@ -442,8 +488,9 @@
     });
 
     // e. PHILOSOPHY PARALLAX
+    const pxSpeed = window.innerWidth < 768 ? 15 : 30;
     gsap.to('.philosophy-bg', {
-      yPercent: 30,
+      yPercent: pxSpeed,
       ease: 'none',
       scrollTrigger: { trigger: '.philosophy', start: 'top bottom', end: 'bottom top', scrub: true }
     });
@@ -459,10 +506,12 @@
     });
 
     // g. SERVICES DEPTH
-    if (window.matchMedia('(min-width: 1024px)').matches) {
+    const isDesktopMouse = window.matchMedia('(min-width: 1024px) and (pointer: fine)').matches;
+    if (isDesktopMouse) {
       gsap.set('.service-card', { z: -200, opacity: 0 });
       ScrollTrigger.batch('.service-card', {
-        start: 'top 85%',
+        start: 'top 90%',
+        once: true,
         onEnter: batch => gsap.to(batch, { z: 0, opacity: 1, stagger: 0.15, duration: 1, ease: 'power2.out' })
       });
     } else {
@@ -492,6 +541,7 @@
       initGallery();
       initForm();
       initFooter();
+      initWhatsAppNudge();
     } catch (error) {
       console.warn('Initialization error:', error);
     }
@@ -502,5 +552,7 @@
   } else {
     init();
   }
+
+  window.addEventListener('load', initAnimations);
 
 })();
